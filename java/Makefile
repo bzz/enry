@@ -30,23 +30,8 @@ $(JNAERATOR_JAR): $(RESOURCES_DIR)
 	wget $(JNAERATOR_JAR_URL) -O $(JNAERATOR_JAR)
 
 os-shared-lib:
-	@os_name="$(shell uname -s)" && \
-	if [ "$$os_name" == "Linux" ]; then \
-		$(MAKE) linux-shared; \
-	elif [ "$$os_name" == "Darwin" ]; then \
-		$(MAKE) darwin-shared; \
-	else \
-		echo "Unsupported operating system, can't build shared library"; \
-		exit 1; \
-	fi;
-
-linux-shared:
 	cd .. && \
-	$(MAKE) linux-shared
-
-darwin-shared:
-	cd .. && \
-	$(MAKE) darwin-shared
+	$(MAKE) build-shared
 
 test:
 	sbt clean test
@@ -57,4 +42,3 @@ package:
 clean:
 	rm -rf $(JAR)
 	rm -rf $(RESOURCES_DIR)
-

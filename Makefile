@@ -32,6 +32,7 @@ DARWIN_DIR=$(RESOURCES_DIR)/darwin
 DARWIN_SHARED_LIB=$(DARWIN_DIR)/libenry.dylib
 HEADER_FILE=libenry.h
 NATIVE_LIB=./shared/enry.go
+GO_ARCH = amd64
 
 $(LINGUIST_PATH):
 	git clone https://github.com/github/linguist.git $@
@@ -61,16 +62,25 @@ benchmarks-slow: $(LINGUST_PATH)
 build-cli:
 	go build -o enry -ldflags "$(LOCAL_LDFLAGS)" cli/enry/main.go
 
-linux-shared: $(LINUX_SHARED_LIB)
 
-darwin-shared: $(DARWIN_SHARED_LIB)
+ifeq ($(OS),Windows_NT)
+	uname_S := Windows
+else
+	uname_S := $(shell uname -s)
+endif
 
-$(DARWIN_SHARED_LIB):
-	mkdir -p $(DARWIN_DIR) && \
-	GOOS=darwin GOARCH=amd64 go build -buildmode=c-shared -o $(DARWIN_SHARED_LIB) $(NATIVE_LIB) && \
-	mv $(DARWIN_DIR)/$(HEADER_FILE) $(RESOURCES_DIR)/$(HEADER_FILE)
+ifeq ($(uname_S),Darwin)
+	go_os = darwin
+	target = $(DARWIN_SHARED_LIB)
+	target_dir = $(DARWIN_DIR)
+endif
+ifeq ($(uname_S),Linux)
+	go_os = linux
+	target = $(LINUX_SHARED_LIB)
+	target_dir = $(LINUX_DIR)
+endif
 
-$(LINUX_SHARED_LIB):
-	mkdir -p $(LINUX_DIR) && \
-	GOOS=linux GOARCH=amd64 go build -buildmode=c-shared -o $(LINUX_SHARED_LIB) $(NATIVE_LIB) && \
-	mv $(LINUX_DIR)/$(HEADER_FILE) $(RESOURCES_DIR)/$(HEADER_FILE)
+build-shared:
+	mkdir -p $(target_dir) && \
+	GOOS=$(go_os) GOARCH=$(GO_ARCH) go build -buildmode=c-shared -o $(target) $(NATIVE_LIB) && \
+	mv $(target_dir)/$(HEADER_FILE) $(RESOURCES_DIR)/$(HEADER_FILE)
