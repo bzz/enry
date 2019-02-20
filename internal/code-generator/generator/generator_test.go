@@ -6,7 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
+	"unicode"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -282,6 +284,23 @@ func (s *GeneratorTestSuite) TestGenerationFiles() {
 		assert.NoError(s.T(), err)
 		out, err := ioutil.ReadFile(outPath.Name())
 		assert.NoError(s.T(), err)
-		assert.Equal(s.T(), string(gold), string(out))
+
+		expected := withoutSpaces(string(gold))
+		actual := withoutSpaces(string(out))
+		assert.Equal(s.T(), expected, actual, "Test %s", test.name)
 	}
+}
+
+// withoutSpaces is a helper to compare content irregarding of whitespaces.
+// needed as gofmt fomat chnages beteween versions e.g for go 1.10 -> go 1.11
+// see https://go-review.googlesource.com/c/go/+/122295/
+func withoutSpaces(str string) string {
+	var sb strings.Builder
+	sb.Grow(len(str))
+	for _, ch := range str {
+		if !unicode.IsSpace(ch) {
+			sb.WriteRune(ch)
+		}
+	}
+	return sb.String()
 }
