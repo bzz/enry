@@ -23,23 +23,23 @@ const maxTokenLen = 32
 // TokenizeFlex implements tokenizer by calling Flex generated code from linguist in C
 func TokenizeFlex(content []byte) []string {
 	var buf C.YY_BUFFER_STATE
-	var scanner C.yyscan_t
-	var extra C.struct_tokenizer_extra
+	var scanner *C.yyscan_t = (*C.yyscan_t)(C.malloc(C.sizeof_yyscan_t))
+	var extra *C.struct_tokenizer_extra = (*C.struct_tokenizer_extra)(C.malloc(C.sizeof_struct_tokenizer_extra))
 	var len C.ulong
 	var r C.int
 
 	cs := C.CBytes(content)
 	defer C.free(unsafe.Pointer(cs))
 
-	C.linguist_yylex_init_extra(&extra, &scanner)
-	buf = C.linguist_yy_scan_bytes((*C.char)(cs), len, scanner)
+	C.linguist_yylex_init_extra(extra, scanner)
+	buf = C.linguist_yy_scan_bytes((*C.char)(cs), len, *scanner)
 
 
 	ary := []string{}
 	for {
 		extra._type = C.NO_ACTION
 		extra.token = nil
-		r = C.linguist_yylex(scanner)
+		r = C.linguist_yylex(*scanner)
 		switch (extra._type) {
 		case C.NO_ACTION:
 			break
@@ -79,8 +79,10 @@ func TokenizeFlex(content []byte) []string {
 		}
 	}
 
-	C.linguist_yy_delete_buffer(buf, scanner)
-	C.linguist_yylex_destroy(scanner)
+	C.linguist_yy_delete_buffer(buf, *scanner)
+	C.linguist_yylex_destroy(*scanner)
+	C.free(unsafe.Pointer(extra))
+	C.free(unsafe.Pointer(scanner))
 
 	return ary
 }
