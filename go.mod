@@ -1,6 +1,6 @@
 module github.com/bzz/enry/v2
 
-go 1.12
+go 1.13
 
 require (
 	github.com/src-d/go-oniguruma v1.1.0
